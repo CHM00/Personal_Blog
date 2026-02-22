@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的个人博客</title>
+    <style>
+        /* 基础页面样式（模拟博客内容） */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 50px; }
+        .content { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        /* --- AI 助手核心样式 --- */
+        /* 悬浮按钮 */
+        #ai-toggle-btn {
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+            background-color: #007bff; color: white; border: none; border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0,123,255,0.4); cursor: pointer;
+            font-size: 16px; font-weight: bold; transition: transform 0.3s ease; z-index: 1000;
+        }
+        #ai-toggle-btn:hover { transform: scale(1.05); }
+
+        /* 聊天窗口面板 */
+        #chat-panel {
+            position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px;
+            background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            display: none; flex-direction: column; overflow: hidden; z-index: 1000;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* 聊天窗口头部 */
+        .chat-header {
+            background-color: #007bff; color: white; padding: 15px; font-size: 16px;
+            font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+        }
+        .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+
+        /* 消息展示区 */
+        #chat-messages {
+            flex: 1; padding: 15px; overflow-y: auto; background-color: #f9f9fa; display: flex; flex-direction: column; gap: 10px;
+        }
+        .message { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .user-msg { background-color: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .ai-msg { background-color: white; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* 加载动画状态 */
+        .loading { font-style: italic; color: #888; font-size: 12px; }
+
+        /* 输入区 */
+        .chat-input-area {
+            display: flex; padding: 10px; background: white; border-top: 1px solid #eee;
+        }
+        #user-input {
+            flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; transition: border-color 0.2s;
+        }
+        #user-input:focus { border-color: #007bff; }
+        #send-btn {
+            background: none; border: none; color: #007bff; font-weight: bold; padding: 0 15px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <h1>欢迎来到我的个人博客</h1>
+        <p>这里记录了我的技术心得和面试准备资料。你可以点击右下角的助手，向它提问关于我博客里的内容！</p>
+    </div>
+
+    <button id="ai-toggle-btn" onclick="toggleChat()">Ask AI</button>
+
+    <div id="chat-panel">
+        <div class="chat-header">
+            <span>🤖 面试问答助手</span>
+            <button class="close-btn" onclick="toggleChat()">×</button>
+        </div>
+        <div id="chat-messages">
+            <div class="message ai-msg">你好！我是博主的 AI 助手。关于面试心得、TCP协议或系统设计，你想了解什么？</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="输入你的问题..." onkeypress="handleKeyPress(event)">
+            <button id="send-btn" onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const chatPanel = document.getElementById('chat-panel');
+        const messagesContainer = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+
+        // 切换窗口显示/隐藏
+        function toggleChat() {
+            chatPanel.style.display = chatPanel.style.display === 'flex' ? 'none' : 'flex';
+            if(chatPanel.style.display === 'flex') {
+                userInput.focus();
+            }
+        }
+
+        // 监听回车键
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 发送消息核心逻辑
+        async function sendMessage() {
+            const question = userInput.value.trim();
+            if (!question) return;
+
+            // 1. 将用户问题添加到界面
+            appendMessage(question, 'user-msg');
+            userInput.value = '';
+
+            // 2. 添加 "AI正在思考" 提示
+            const loadingId = appendMessage('...', 'ai-msg loading');
+
+            try {
+                // 3. 向你的 FastAPI 后端发送请求
+                // 注意：这里假设前后端部署在同一域名下，Nginx 做了 /api/ 代理
+                const response = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // FastAPI 使用 embed=True 时的标准 payload 格式
+                    body: JSON.stringify({ "question": question }) 
+                });
+
+                const data = await response.json();
+                
+                // 4. 移除加载状态，显示真实回答
+                document.getElementById(loadingId).remove();
+                
+                if(data.status === 'success') {
+                    appendMessage(data.answer, 'ai-msg');
+                } else {
+                    appendMessage("抱歉，服务器开小差了：" + data.answer, 'ai-msg');
+                }
+
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                appendMessage("网络请求失败，请检查后端服务是否正常启动。", 'ai-msg');
+            }
+        }
+
+        // 辅助函数：向聊天框追加 DOM 元素
+        function appendMessage(text, className) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${className}`;
+            msgDiv.innerText = text;
+            
+            // 生成唯一ID以便后续删除（用于loading状态）
+            const id = 'msg-' + Date.now();
+            msgDiv.id = id;
+            
+            messagesContainer.appendChild(msgDiv);
+            
+            // 自动滚动到最底部
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return id;
+        }
+    </script>
+</body>
+</html>
