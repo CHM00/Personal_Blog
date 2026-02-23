@@ -313,20 +313,31 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+// import axios from 'axios'
+import request from '@/utils/request'
 
 const router = useRouter()
 const articles = ref([]) // 变成了响应式数据
 
 // 挂载时请求后端接口
+// onMounted(async () => {
+//   try {
+//     const res = await axios.get('http://150.158.123.242:8000/api/articles')
+//     articles.value = res.data
+//   } catch (error) {
+//     console.error('获取文章列表失败:', error)
+//   }
+// })
+
 onMounted(async () => {
   try {
-    const res = await axios.get('http://150.158.123.242:8000/api/articles')
+    const res = await request.get('/api/articles')
     articles.value = res.data
   } catch (error) {
     console.error('获取文章列表失败:', error)
   }
 })
+
 
 const goToArticle = (id) => {
   router.push(`/article/${id}`)

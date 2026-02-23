@@ -2,7 +2,8 @@
   <div class="ai-chat-wrapper">
     <!-- 悬浮按钮 -->
     <button class="ai-toggle-btn" @click="toggleChat">
-      面试助手
+      面试
+      助手
     </button>
 
     <!-- 聊天面板 -->

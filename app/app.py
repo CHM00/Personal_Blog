@@ -9,7 +9,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 # Import modular components
 from vectorstore import get_vectorstore, reload_vectorstore
-from crud import add_document, delete_document, update_document, get_document_count
+from crud import add_document, delete_document, update_document
 from chunking import split_documents
 from fastapi.middleware.cors import CORSMiddleware
 from rerank import rerank_documents
@@ -22,12 +22,11 @@ from fastapi import Depends, HTTPException
 from pydantic import BaseModel
 from typing import List
 
-# 1. 在文件顶部补充引入
 import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-# 2. 配置 JWT 密钥和管理员账号（实际部署建议放进 .env）
+# 配置 JWT 密钥和管理员账号
 SECRET_KEY = os.getenv("SECRET_KEY", "chm_super_secret_key_2026")
 ALGORITHM = "HS256"
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
@@ -36,7 +35,7 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "123456")  # 你可以自己改成�
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 
-# ================= 1. SQLite 数据库配置 =================
+# SQLite 数据库配置
 SQLALCHEMY_DATABASE_URL = "sqlite:///./blog.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -68,12 +67,6 @@ vectorstore = get_vectorstore()
 retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
 print("向量库文档总数:", vectorstore._collection.count())
 
-# question = "Embedding模型的结构是什么？"
-# raw = retriever.invoke(question)
-# print("retriever 直接输出类型:", type(raw))
-# print("输出预览:", raw)
-
-
 # 初始化 LLM（支持 OpenAI 兼容端点）
 llm = ChatOpenAI(
     model=os.getenv("MODEL", "deepseek-chat"),
@@ -95,17 +88,8 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{question}"),
 ])
 
-# Stuff 文档链（处理检索文档）
-
-# 增加调试用的 runnable
-from langchain_core.runnables import RunnableLambda
-
-
 from langchain_core.runnables import RunnableParallel, RunnableLambda
-from operator import itemgetter
 
-
-# 调试函数（保留你的 debug_context）
 def debug_context(docs):
     print("\n" + "="*70)
     print(f"【检索到的文档数量】: {len(docs)}")
@@ -129,7 +113,7 @@ def format_context(docs):
     context_str = "\n\n───\n\n".join(contents)
     print(f"最终传入 LLM 的 context 长度: {len(context_str)} 字符")
     if len(context_str) < 20:
-        print("【警告】context 几乎为空，LLM 很可能回答'上下文不足'")
+        print("context 几乎为空，LLM 很可能回答'上下文不足'")
     return context_str
 
 
@@ -171,7 +155,7 @@ class ArticleResponse(BaseModel):
     content: str
 
 
-# 3. 新增：登录获取 Token 接口
+# 登录获取 Token 接口
 @app.post("/api/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # 校验账号密码
@@ -198,13 +182,13 @@ def get_current_admin(token: str = Depends(oauth2_scheme)):
     return username
 
 
-# ================= 3. 博客文章 API 接口 =================
+# 博客文章 API 接口
 @app.post("/api/articles", response_model=ArticleResponse)
 def create_article(article: ArticleCreate, db: Session = Depends(get_db), current_user: str = Depends(get_current_admin)):
     """前端发布新文章接口"""
     date_str = datetime.now().strftime("%Y-%m-%d")
 
-    # 1. 存入 SQLite 数据库 (用于前端页面展示)
+    # 存入 SQLite 数据库 (用于前端页面展示)
     db_article = DBArticle(
         title=article.title,
         date=date_str,
@@ -216,7 +200,7 @@ def create_article(article: ArticleCreate, db: Session = Depends(get_db), curren
     db.commit()
     db.refresh(db_article)
 
-    # 2. 【核心联动】同步保存为 md 文件，供 AI 面试助手 RAG 使用！
+    # 同步保存为 md 文件，供 AI 面试助手 RAG 使用
     try:
         filename = f"article_{db_article.id}.md"
         # 拼接一个适合 AI 阅读的文档格式
@@ -249,8 +233,6 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
             "summary": a.summary, "content": a.content}
 
 
-# 在 rag_chain 定义之前或之后加入
-
 from langchain_core.runnables import RunnableLambda
 
 def rerank_step(x):
@@ -263,13 +245,12 @@ def rerank_step(x):
         "docs": reranked
     }
 
-# 修改原来的链
 rag_chain = (
     RunnableParallel(
         question=RunnablePassthrough(),
         docs=retriever | RunnableLambda(debug_context)
     )
-    | RunnableLambda(rerank_step)               # ← 新增 rerank 步骤
+    | RunnableLambda(rerank_step)
     | RunnableLambda(lambda x: {
         "question": x["question"],
         "context": format_context(x["docs"])
@@ -282,28 +263,6 @@ rag_chain = (
     | llm
     | StrOutputParser()
 )
-
-
-# ── 推荐的链写法 ──
-# rag_chain = (
-#     RunnableParallel(
-#         question=RunnablePassthrough(),
-#         docs=retriever | RunnableLambda(debug_context)
-#     )
-#     | RunnableLambda(lambda x: {
-#         "question": x["question"],
-#         "context": format_context(x["docs"])
-#     })
-#     # ──────────────── 增加这里 ────────────────
-#     | RunnableLambda(lambda inputs: print("\n=== 实际送进 LLM 的完整 Prompt ===\n")
-#                                  or print(prompt.invoke(inputs).to_string())
-#                                  or print("====================================\n")
-#                                  or inputs)
-#     # ────────────────────────────────────────────
-#     | prompt
-#     | llm
-#     | StrOutputParser()
-# )
 
 # 完整 RAG 链
 rag_chain = rag_chain  # Simplified since retriever is now in stuff_chain
@@ -326,7 +285,6 @@ async def ask_question(question: str = Body(..., embed=True)):
 
 @app.get("/api/health")
 async def health_check():
-    """健康检查"""
     doc_count = get_document_count(DOCS_PATH)
     collection_count = vectorstore._collection.count()
     return {

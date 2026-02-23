@@ -379,10 +379,24 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { marked } from 'marked'
-import hljs from 'highlight.js'
-import 'highlight.js/styles/github-dark.css'
+// import { marked } from 'marked'
+// import hljs from 'highlight.js'
+// import 'highlight.js/styles/github-dark.css'
 import axios from 'axios'
+
+
+
+import 'katex/dist/katex.min.css';
+import { marked } from 'marked';
+import markedKatex from 'marked-katex-extension';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github-dark.css';
+
+// 使用扩展
+marked.use(markedKatex({
+  throwOnError: false, // 即使公式写错也不要让整个页面崩溃
+  displayMode: false   // 默认非块级模式，它会自动根据 $ 或 $$ 识别
+}));
 
 marked.setOptions({
   highlight: function (code, lang) {

@@ -32,8 +32,10 @@
 <script setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import axios from 'axios'
+// import axios from 'axios'
 import { useRouter } from 'vue-router'
+import request from '@/utils/request' // 引入刚才封装的拦截器对象
+
 
 const router = useRouter()
 const tagsInput = ref('')
@@ -66,21 +68,39 @@ const submitArticle = async () => {
     // 替换成你的后端地址
     // await axios.post('http://150.158.123.242:8000/api/articles', payload)
 
-    // 修改后的代码：提取 Token 并在 headers 里携带
+
     const token = localStorage.getItem('admin_token')
-    await axios.post('http://150.158.123.242:8000/api/articles', payload, {
+    // 使用 request 代替 axios
+    await request.post('/api/articles', payload, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     })
-    ElMessage.success('发布成功！AI助手已同步学习该文章。')
-    router.push('/') // 发布成功后跳回首页
-  } catch (error) {
-    ElMessage.error('发布失败，请检查后端服务。')
-    console.error(error)
-  } finally {
+    ElMessage.success('发布成功！')
+    router.push('/')
+    } catch (error) {
+      // 这里的 401 错误会被拦截器自动处理，组件内只需处理业务逻辑
+      console.error('发布失败', error)
+    }finally {
     isSubmitting.value = false
   }
+
+
+  //   // 修改后的代码：提取 Token 并在 headers 里携带
+  //   const token = localStorage.getItem('admin_token')
+  //   await axios.post('http://150.158.123.242:8000/api/articles', payload, {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`
+  //     }
+  //   })
+  //   ElMessage.success('发布成功！AI助手已同步学习该文章。')
+  //   router.push('/') // 发布成功后跳回首页
+  // } catch (error) {
+  //   ElMessage.error('发布失败，请检查后端服务。')
+  //   console.error(error)
+  // } finally {
+  //   isSubmitting.value = false
+  // }
 }
 
 const resetForm = () => {
