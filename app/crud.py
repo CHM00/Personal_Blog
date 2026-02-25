@@ -118,3 +118,7 @@ def update_document(filename: str, content: str):
     except:
         pass
     add_document(filename, content)
+
+def get_document_count(path: str = DOCS_PATH) -> int:
+    """获取文档数量"""
+    return len([f for f in os.listdir(path) if f.endswith('.md')])

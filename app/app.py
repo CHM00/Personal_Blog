@@ -9,7 +9,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 # Import modular components
 from vectorstore import get_vectorstore, reload_vectorstore
-from crud import add_document, delete_document, update_document
+from crud import add_document, delete_document, update_document, get_document_count
 from chunking import split_documents
 from fastapi.middleware.cors import CORSMiddleware
 from rerank import rerank_documents
