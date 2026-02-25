@@ -363,6 +363,133 @@
 
 
 
+<!--<template>-->
+<!--  <el-row :gutter="20">-->
+<!--    <el-col :span="18">-->
+<!--      <div class="section-title">✨ 最新文章</div>-->
+
+<!--      <el-alert-->
+<!--        v-if="isAdmin"-->
+<!--        title="管理员权限已激活"-->
+<!--        type="success"-->
+<!--        show-icon-->
+<!--        style="margin-bottom: 20px"-->
+<!--      />-->
+
+<!--      <div v-if="loading" style="text-align:center; padding:40px; color:#999">数据加载中...</div>-->
+
+<!--      <el-card v-for="item in articles" :key="item.id" class="article-card" shadow="hover">-->
+<!--        <div class="card-header-flex">-->
+<!--          <h3 class="article-title" @click="goToArticle(item.id)">{{ item.title }}</h3>-->
+
+<!--          <div v-if="isAdmin" class="admin-actions">-->
+<!--            <el-button-->
+<!--              type="danger"-->
+<!--              size="small"-->
+<!--              plain-->
+<!--              @click.stop="handleDelete(item.id)"-->
+<!--            >-->
+<!--              删除-->
+<!--            </el-button>-->
+<!--          </div>-->
+<!--        </div>-->
+
+<!--        <div class="article-meta">-->
+<!--          <span>📅 {{ item.date }}</span>-->
+<!--          <span class="tags">-->
+<!--            🏷️ <el-tag v-for="tag in item.tags" :key="tag" size="small" type="info" class="tag-item">{{ tag }}</el-tag>-->
+<!--          </span>-->
+<!--        </div>-->
+<!--        <p class="article-summary">{{ item.summary }}</p>-->
+<!--        <div class="article-action">-->
+<!--          <el-button type="primary" link @click="goToArticle(item.id)">阅读全文 >></el-button>-->
+<!--        </div>-->
+<!--      </el-card>-->
+<!--    </el-col>-->
+
+<!--    <el-col :span="6">-->
+<!--      <el-card shadow="hover" class="sidebar-card">-->
+<!--        <template #header><div class="card-header">📢 网站公告</div></template>-->
+<!--        <p class="notice-text">欢迎来到我的个人知识库！✨</p>-->
+<!--        <div v-if="!isAdmin" style="margin-top: 15px">-->
+<!--          <el-button type="primary" size="small" @click="router.push('/login')">管理员登录</el-button>-->
+<!--        </div>-->
+<!--      </el-card>-->
+<!--    </el-col>-->
+<!--  </el-row>-->
+<!--</template>-->
+
+<!--<script setup>-->
+<!--import { ref, onMounted, computed } from 'vue'-->
+<!--import { useRouter } from 'vue-router'-->
+<!--import { ElMessageBox, ElMessage } from 'element-plus'-->
+<!--import request from '@/utils/request'-->
+
+<!--const router = useRouter()-->
+<!--const articles = ref([])-->
+<!--const loading = ref(false)-->
+
+<!--// 必须严格匹配你在 Login.vue 中存入的 'admin_token'-->
+<!--const isAdmin = computed(() => {-->
+<!--  return !!localStorage.getItem('admin_token')-->
+<!--})-->
+
+<!--const fetchArticles = async () => {-->
+<!--  loading.value = true-->
+<!--  try {-->
+<!--    const res = await request.get('/api/articles')-->
+<!--    articles.value = res.data-->
+<!--  } catch (error) {-->
+<!--    console.error('获取文章失败:', error)-->
+<!--  } finally {-->
+<!--    loading.value = false-->
+<!--  }-->
+<!--}-->
+
+<!--const handleDelete = (id) => {-->
+<!--  ElMessageBox.confirm('确定要删除这篇文章吗？AI知识库也将同步移除。', '警告', {-->
+<!--    confirmButtonText: '确定',-->
+<!--    cancelButtonText: '取消',-->
+<!--    type: 'warning'-->
+<!--  }).then(async () => {-->
+<!--    try {-->
+<!--      // 这里的路径必须与后端 @app.delete("/api/articles/{article_id}") 一致-->
+<!--      await request.delete(`/api/articles/${id}`)-->
+<!--      ElMessage.success('删除成功')-->
+<!--      fetchArticles()-->
+<!--    } catch (error) {-->
+<!--      ElMessage.error('删除失败，请检查登录状态')-->
+<!--    }-->
+<!--  }).catch(() => {})-->
+<!--}-->
+
+<!--const goToArticle = (id) => {-->
+<!--  router.push(`/article/${id}`)-->
+<!--}-->
+
+<!--onMounted(() => {-->
+<!--  fetchArticles()-->
+<!--  console.log("当前 admin_token:", localStorage.getItem('admin_token'))-->
+<!--})-->
+<!--</script>-->
+
+<!--<style scoped>-->
+<!--.section-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; color: #333; }-->
+<!--.article-card { margin-bottom: 20px; border-radius: 8px; border: none; }-->
+<!--.card-header-flex {-->
+<!--  display: flex;-->
+<!--  justify-content: space-between;-->
+<!--  align-items: center;-->
+<!--  margin-bottom: 10px;-->
+<!--}-->
+<!--.article-title { margin: 0; font-size: 20px; color: #2c3e50; cursor: pointer; }-->
+<!--.article-title:hover { color: #409eff; }-->
+<!--.article-meta { font-size: 13px; color: #909399; margin-bottom: 15px; display: flex; gap: 15px; }-->
+<!--.article-action { text-align: right; }-->
+<!--.sidebar-card { border-radius: 8px; border: none; }-->
+<!--</style>-->
+
+
 <template>
   <el-row :gutter="20">
     <el-col :span="18">
@@ -400,7 +527,11 @@
             🏷️ <el-tag v-for="tag in item.tags" :key="tag" size="small" type="info" class="tag-item">{{ tag }}</el-tag>
           </span>
         </div>
-        <p class="article-summary">{{ item.summary }}</p>
+
+        <div class="article-summary-wrapper">
+          <v-md-preview :text="item.summary"></v-md-preview>
+        </div>
+
         <div class="article-action">
           <el-button type="primary" link @click="goToArticle(item.id)">阅读全文 >></el-button>
         </div>
@@ -413,6 +544,21 @@
         <p class="notice-text">欢迎来到我的个人知识库！✨</p>
         <div v-if="!isAdmin" style="margin-top: 15px">
           <el-button type="primary" size="small" @click="router.push('/login')">管理员登录</el-button>
+        </div>
+      </el-card>
+      <el-card shadow="hover" class="sidebar-card" style="margin-top: 20px;">
+        <template #header><div class="card-header">🔗 个人链接</div></template>
+        <div class="link-group">
+          <div class="link-item">
+            <el-link href="https://blog.csdn.net/weixin_49891405?type=blog" target="_blank" type="primary">
+              小明的CSDN博客
+            </el-link>
+          </div>
+          <div class="link-item">
+            <el-link href="https://github.com/CHM00" target="_blank" type="primary">
+              Github：CHM00
+            </el-link>
+          </div>
         </div>
       </el-card>
     </el-col>
@@ -429,7 +575,6 @@ const router = useRouter()
 const articles = ref([])
 const loading = ref(false)
 
-// 必须严格匹配你在 Login.vue 中存入的 'admin_token'
 const isAdmin = computed(() => {
   return !!localStorage.getItem('admin_token')
 })
@@ -453,7 +598,6 @@ const handleDelete = (id) => {
     type: 'warning'
   }).then(async () => {
     try {
-      // 这里的路径必须与后端 @app.delete("/api/articles/{article_id}") 一致
       await request.delete(`/api/articles/${id}`)
       ElMessage.success('删除成功')
       fetchArticles()
@@ -469,7 +613,6 @@ const goToArticle = (id) => {
 
 onMounted(() => {
   fetchArticles()
-  console.log("当前 admin_token:", localStorage.getItem('admin_token'))
 })
 </script>
 
@@ -484,7 +627,18 @@ onMounted(() => {
 }
 .article-title { margin: 0; font-size: 20px; color: #2c3e50; cursor: pointer; }
 .article-title:hover { color: #409eff; }
-.article-meta { font-size: 13px; color: #909399; margin-bottom: 15px; display: flex; gap: 15px; }
-.article-action { text-align: right; }
+.article-meta { font-size: 13px; color: #909399; margin-bottom: 10px; display: flex; gap: 15px; }
+.article-action { text-align: right; margin-top: 10px; }
 .sidebar-card { border-radius: 8px; border: none; }
+
+/* [修改点]：自定义 Markdown 预览样式 */
+/* 使用 :deep() 穿透组件样式，去掉默认的大内边距，让它在列表中看起来更协调 */
+.article-summary-wrapper :deep(.github-markdown-body) {
+  padding: 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
 </style>
+
+

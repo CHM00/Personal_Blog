@@ -67,6 +67,8 @@ from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredMarkdownLoader
 from chunking import split_documents
+from rank_bm25 import BM25Okapi
+import jieba
 
 load_dotenv()
 
@@ -116,6 +118,45 @@ def reload_vectorstore():
     vs.delete_collection()  # 清空数据
     _vectorstore_instance = None  # 销毁缓存，下次调用 get_vectorstore 时会重连
     return get_vectorstore()
+
+
+def hybrid_retrieval(query: str, k: int = 10):
+    """
+    实现混合检索：向量检索 + BM25 关键词检索
+    """
+    vs = get_vectorstore()
+
+    # 1. 语义检索 (Vector Search)
+    vector_docs = vs.similarity_search(query, k=k)
+
+    # 2. 关键词检索 (BM25)
+    # 获取库中所有文档作为语料库
+    all_content = vs._collection.get()
+    documents_content = all_content['documents']
+    metadatas = all_content['metadatas']
+
+    if not documents_content:
+        return vector_docs
+
+    # 对语料和查询进行分词
+    tokenized_corpus = [list(jieba.cut(doc)) for doc in documents_content]
+    bm25 = BM25Okapi(tokenized_corpus)
+    tokenized_query = list(jieba.cut(query))
+
+    # 获取 BM25 评分前 k 的文档索引
+    bm25_scores = bm25.get_scores(tokenized_query)
+    top_n_indices = sorted(range(len(bm25_scores)), key=lambda i: bm25_scores[i], reverse=True)[:k]
+
+    # 构建 BM25 结果 Document 对象
+    from langchain_core.documents import Document
+    bm25_docs = [
+        Document(page_content=documents_content[i], metadata=metadatas[i])
+        for i in top_n_indices if bm25_scores[i] > 0
+    ]
+
+    # 3. 合并去重
+    combined_dict = {doc.page_content: doc for doc in (vector_docs + bm25_docs)}
+    return list(combined_dict.values())
 
 if __name__ == "__main__":
     # 测试向量库功能

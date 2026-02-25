@@ -349,10 +349,298 @@
 <!--</style>-->
 
 
+<!--<template>-->
+<!--  <div class="article-detail-container">-->
+<!--    <div class="back-action">-->
+<!--      <el-button @click="router.back()" link>🔙 返回列表</el-button>-->
+<!--    </div>-->
+
+<!--    <el-card class="article-content-card" shadow="never">-->
+<!--      <template #header>-->
+<!--        <div class="article-header">-->
+<!--          <h1 class="title">{{ article.title }}</h1>-->
+<!--          <div class="meta" v-if="article.date">-->
+<!--            <span>📅 发布于: {{ article.date }}</span>-->
+<!--            <el-divider direction="vertical" />-->
+<!--            <span>🏷️ 标签:-->
+<!--              <el-tag v-for="tag in article.tags" :key="tag" size="small" class="mx-1">-->
+<!--                {{ tag }}-->
+<!--              </el-tag>-->
+<!--            </span>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </template>-->
+
+<!--      <div class="markdown-body" v-html="renderedContent"></div>-->
+<!--    </el-card>-->
+<!--  </div>-->
+<!--</template>-->
+
+<!--<script setup>-->
+<!--import { ref, onMounted, computed } from 'vue'-->
+<!--import { useRoute, useRouter } from 'vue-router'-->
+<!--// import { marked } from 'marked'-->
+<!--// import hljs from 'highlight.js'-->
+<!--// import 'highlight.js/styles/github-dark.css'-->
+<!--import axios from 'axios'-->
+
+
+
+<!--import 'katex/dist/katex.min.css';-->
+<!--import { marked } from 'marked';-->
+<!--import markedKatex from 'marked-katex-extension';-->
+<!--import hljs from 'highlight.js';-->
+<!--import 'highlight.js/styles/github-dark.css';-->
+
+<!--// 使用扩展-->
+<!--marked.use(markedKatex({-->
+<!--  throwOnError: false, // 即使公式写错也不要让整个页面崩溃-->
+<!--  displayMode: false   // 默认非块级模式，它会自动根据 $ 或 $$ 识别-->
+<!--}));-->
+
+<!--marked.setOptions({-->
+<!--  highlight: function (code, lang) {-->
+<!--    const language = hljs.getLanguage(lang) ? lang : 'plaintext';-->
+<!--    return hljs.highlight(code, { language }).value;-->
+<!--  },-->
+<!--  langPrefix: 'hljs language-'-->
+<!--})-->
+
+<!--const route = useRoute()-->
+<!--const router = useRouter()-->
+
+<!--const article = ref({-->
+<!--  id: null,-->
+<!--  title: '努力加载中...',-->
+<!--  date: '',-->
+<!--  tags: [],-->
+<!--  content: ''-->
+<!--})-->
+
+<!--const renderedContent = computed(() => {-->
+<!--  return marked(article.value.content || '')-->
+<!--})-->
+
+<!--onMounted(() => {-->
+<!--  const articleId = route.params.id-->
+<!--  fetchArticleData(articleId)-->
+<!--})-->
+
+<!--const fetchArticleData = async (id) => {-->
+<!--  try {-->
+<!--    // 请求真实后端获取文章-->
+<!--    const res = await axios.get(`http://150.158.123.242:8000/api/articles/${id}`)-->
+<!--    if (res.data) {-->
+<!--      article.value = res.data-->
+<!--    }-->
+<!--  } catch (error) {-->
+<!--    console.error("加载文章失败:", error)-->
+<!--    article.value.title = '文章加载失败'-->
+<!--    article.value.content = '> 无法连接到后端，请检查 FastAPI 服务是否正常运行。'-->
+<!--  }-->
+<!--}-->
+<!--</script>-->
+
+<!--<style scoped>-->
+<!--/* 同样保留原有样式即可 */-->
+<!--.article-detail-container { padding-bottom: 40px; }-->
+<!--.back-action { margin-bottom: 15px; }-->
+<!--.article-content-card { border-radius: 8px; border: none; }-->
+<!--.article-header { text-align: center; padding: 20px 0; }-->
+<!--.article-header .title { font-size: 28px; color: #2c3e50; margin-bottom: 15px; }-->
+<!--.article-header .meta { color: #909399; font-size: 14px; }-->
+<!--.mx-1 { margin: 0 4px; }-->
+<!--.markdown-body { line-height: 1.8; font-size: 16px; color: #333; }-->
+<!--.markdown-body :deep(h2) { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px; }-->
+<!--.markdown-body :deep(pre) { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }-->
+<!--</style>-->
+
+
+<!--<template>-->
+<!--  <el-row :gutter="20">-->
+<!--    <el-col :span="18">-->
+<!--      <el-card shadow="hover" class="article-detail-card">-->
+<!--        <div v-if="loading" style="text-align: center; padding: 40px;">加载中...</div>-->
+
+<!--        <div v-else-if="article">-->
+<!--          <h1 class="detail-title">{{ article.title }}</h1>-->
+<!--          <div class="detail-meta">-->
+<!--            <span>📅 {{ article.date }}</span>-->
+<!--            <span style="margin-left: 15px">-->
+<!--               <el-tag v-for="tag in article.tags" :key="tag" size="small" style="margin-right:5px">{{ tag }}</el-tag>-->
+<!--            </span>-->
+<!--          </div>-->
+
+<!--          <el-divider />-->
+
+<!--          <v-md-preview :text="article.content"></v-md-preview>-->
+<!--        </div>-->
+<!--      </el-card>-->
+<!--    </el-col>-->
+
+<!--    <el-col :span="6">-->
+<!--        </el-col>-->
+<!--  </el-row>-->
+<!--</template>-->
+
+<!--<script setup>-->
+<!--import { ref, onMounted } from 'vue'-->
+<!--import { useRoute } from 'vue-router'-->
+<!--import request from '@/utils/request'-->
+
+<!--const route = useRoute()-->
+<!--const article = ref(null)-->
+<!--const loading = ref(false)-->
+
+<!--onMounted(async () => {-->
+<!--  loading.value = true-->
+<!--  try {-->
+<!--    const id = route.params.id-->
+<!--    const res = await request.get(`/api/articles/${id}`)-->
+<!--    article.value = res.data-->
+<!--  } catch (error) {-->
+<!--    console.error(error)-->
+<!--  } finally {-->
+<!--    loading.value = false-->
+<!--  }-->
+<!--})-->
+<!--</script>-->
+
+<!--<style scoped>-->
+<!--.article-detail-card { min-height: 80vh; border-radius: 8px; border: none; }-->
+<!--.detail-title { font-size: 28px; margin-bottom: 15px; color: #333; text-align: center;}-->
+<!--.detail-meta { text-align: center; color: #999; margin-bottom: 20px; }-->
+<!--</style>-->
+
+<!--<template>-->
+<!--  <el-row :gutter="20">-->
+<!--    <el-col :span="18">-->
+<!--      <el-card shadow="hover" class="article-detail-card">-->
+
+<!--        <div class="header-container">-->
+<!--          <el-page-header-->
+<!--            @back="goBack"-->
+<!--            content="文章详情"-->
+<!--            title="返回列表"-->
+<!--          >-->
+<!--          </el-page-header>-->
+<!--        </div>-->
+<!--        <el-divider style="margin: 15px 0;" />-->
+
+<!--        <div v-if="loading" style="text-align: center; padding: 40px; color: #999;">-->
+<!--          <el-icon class="is-loading"><Loading /></el-icon> 加载中...-->
+<!--        </div>-->
+
+<!--        <div v-else-if="article">-->
+<!--          <h1 class="detail-title">{{ article.title }}</h1>-->
+
+<!--          <div class="detail-meta">-->
+<!--            <span>📅 {{ article.date }}</span>-->
+<!--            <span style="margin-left: 15px">-->
+<!--               <el-tag-->
+<!--                 v-for="tag in article.tags"-->
+<!--                 :key="tag"-->
+<!--                 size="small"-->
+<!--                 type="info"-->
+<!--                 effect="plain"-->
+<!--                 style="margin-right:5px"-->
+<!--               >-->
+<!--                 {{ tag }}-->
+<!--               </el-tag>-->
+<!--            </span>-->
+<!--          </div>-->
+
+<!--          <div class="markdown-content">-->
+<!--             <v-md-preview :text="article.content"></v-md-preview>-->
+<!--          </div>-->
+<!--        </div>-->
+
+<!--        <el-empty v-else description="文章不存在或已删除"></el-empty>-->
+
+<!--      </el-card>-->
+<!--    </el-col>-->
+
+<!--    <el-col :span="6">-->
+<!--      <el-card shadow="hover" class="sidebar-card">-->
+<!--        <template #header><div class="card-header">📢 导航</div></template>-->
+<!--        <el-button type="primary" style="width: 100%" @click="goBack">返回首页</el-button>-->
+<!--      </el-card>-->
+<!--    </el-col>-->
+<!--  </el-row>-->
+<!--</template>-->
+
+<!--<script setup>-->
+<!--import { ref, onMounted } from 'vue'-->
+<!--import { useRoute, useRouter } from 'vue-router'-->
+<!--import request from '@/utils/request'-->
+<!--import { Loading } from '@element-plus/icons-vue' // 引入加载图标-->
+
+<!--const route = useRoute()-->
+<!--const router = useRouter()-->
+<!--const article = ref(null)-->
+<!--const loading = ref(false)-->
+
+<!--// [关键逻辑]：返回上一页-->
+<!--const goBack = () => {-->
+<!--  // router.back() 能保留列表页的滚动位置和状态-->
+<!--  // 如果没有上一页历史（比如直接打开链接），则强制回首页-->
+<!--  if (window.history.state.back) {-->
+<!--    router.back()-->
+<!--  } else {-->
+<!--    router.push('/')-->
+<!--  }-->
+<!--}-->
+
+<!--onMounted(async () => {-->
+<!--  loading.value = true-->
+<!--  try {-->
+<!--    const id = route.params.id-->
+<!--    const res = await request.get(`/api/articles/${id}`)-->
+<!--    article.value = res.data-->
+<!--  } catch (error) {-->
+<!--    console.error("加载文章详情失败:", error)-->
+<!--  } finally {-->
+<!--    loading.value = false-->
+<!--  }-->
+<!--})-->
+<!--</script>-->
+
+<!--<style scoped>-->
+<!--.article-detail-card {-->
+<!--  min-height: 80vh;-->
+<!--  border-radius: 8px;-->
+<!--  border: none;-->
+<!--}-->
+
+<!--.header-container {-->
+<!--  margin-bottom: 10px;-->
+<!--}-->
+
+<!--.detail-title {-->
+<!--  font-size: 28px;-->
+<!--  margin: 20px 0 15px 0;-->
+<!--  color: #333;-->
+<!--  text-align: center;-->
+<!--  font-weight: 600;-->
+<!--}-->
+
+<!--.detail-meta {-->
+<!--  text-align: center;-->
+<!--  color: #999;-->
+<!--  margin-bottom: 30px;-->
+<!--  font-size: 14px;-->
+<!--}-->
+
+<!--/* 调整 Markdown 预览区域的样式，使其更美观 */-->
+<!--.markdown-content :deep(.github-markdown-body) {-->
+<!--  padding: 10px 20px;-->
+<!--}-->
+<!--</style>-->
+
 <template>
   <div class="article-detail-container">
     <div class="back-action">
-      <el-button @click="router.back()" link>🔙 返回列表</el-button>
+      <el-page-header @back="goBack" content="文章详情" title="返回列表" />
     </div>
 
     <el-card class="article-content-card" shadow="never">
@@ -371,86 +659,99 @@
         </div>
       </template>
 
-      <div class="markdown-body" v-html="renderedContent"></div>
+      <div class="markdown-body-wrapper">
+         <v-md-preview :text="article.content"></v-md-preview>
+      </div>
+
+      <el-empty v-if="!article.content && !loading" description="暂无内容"></el-empty>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-// import { marked } from 'marked'
-// import hljs from 'highlight.js'
-// import 'highlight.js/styles/github-dark.css'
-import axios from 'axios'
-
-
-
-import 'katex/dist/katex.min.css';
-import { marked } from 'marked';
-import markedKatex from 'marked-katex-extension';
-import hljs from 'highlight.js';
-import 'highlight.js/styles/github-dark.css';
-
-// 使用扩展
-marked.use(markedKatex({
-  throwOnError: false, // 即使公式写错也不要让整个页面崩溃
-  displayMode: false   // 默认非块级模式，它会自动根据 $ 或 $$ 识别
-}));
-
-marked.setOptions({
-  highlight: function (code, lang) {
-    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-    return hljs.highlight(code, { language }).value;
-  },
-  langPrefix: 'hljs language-'
-})
+import request from '@/utils/request' // 使用封装好的 request
 
 const route = useRoute()
 const router = useRouter()
+const loading = ref(false)
 
 const article = ref({
   id: null,
-  title: '努力加载中...',
+  title: '加载中...',
   date: '',
   tags: [],
   content: ''
 })
 
-const renderedContent = computed(() => {
-  return marked(article.value.content || '')
-})
+// 返回上一页逻辑
+const goBack = () => {
+  if (window.history.state.back) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
-onMounted(() => {
+onMounted(async () => {
   const articleId = route.params.id
-  fetchArticleData(articleId)
-})
-
-const fetchArticleData = async (id) => {
+  loading.value = true
   try {
-    // 请求真实后端获取文章
-    const res = await axios.get(`http://150.158.123.242:8000/api/articles/${id}`)
+    const res = await request.get(`/api/articles/${articleId}`)
     if (res.data) {
       article.value = res.data
     }
   } catch (error) {
     console.error("加载文章失败:", error)
-    article.value.title = '文章加载失败'
-    article.value.content = '> 无法连接到后端，请检查 FastAPI 服务是否正常运行。'
+    article.value.title = '加载失败'
+    article.value.content = '> ❌ 无法获取文章内容，请检查网络或后端服务。'
+  } finally {
+    loading.value = false
   }
-}
+})
 </script>
 
 <style scoped>
-/* 同样保留原有样式即可 */
-.article-detail-container { padding-bottom: 40px; }
-.back-action { margin-bottom: 15px; }
-.article-content-card { border-radius: 8px; border: none; }
-.article-header { text-align: center; padding: 20px 0; }
-.article-header .title { font-size: 28px; color: #2c3e50; margin-bottom: 15px; }
-.article-header .meta { color: #909399; font-size: 14px; }
-.mx-1 { margin: 0 4px; }
-.markdown-body { line-height: 1.8; font-size: 16px; color: #333; }
-.markdown-body :deep(h2) { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px; }
-.markdown-body :deep(pre) { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
+.article-detail-container {
+  max-width: 1000px; /* 限制最大宽度，阅读体验更好 */
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.back-action {
+  margin-bottom: 20px;
+}
+
+.article-content-card {
+  border-radius: 8px;
+  border: none;
+  min-height: 600px;
+}
+
+.article-header {
+  text-align: center;
+  padding: 10px 0 20px;
+}
+
+.title {
+  font-size: 28px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.meta {
+  color: #909399;
+  font-size: 14px;
+}
+
+.mx-1 {
+  margin: 0 4px;
+}
+
+/* 调整 v-md-editor 的默认边距，使其与卡片更融合 */
+.markdown-body-wrapper :deep(.github-markdown-body) {
+  padding: 10px 20px;
+}
 </style>

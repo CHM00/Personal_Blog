@@ -8,7 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
 # Import modular components
-from vectorstore import get_vectorstore, reload_vectorstore
+from vectorstore import get_vectorstore, reload_vectorstore, hybrid_retrieval
 from crud import add_document, delete_document, update_document, get_document_count
 from chunking import split_documents
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,7 +64,7 @@ if not os.path.exists(DOCS_PATH):
 # 初始化向量库和检索器
 print("初始化向量数据库...")
 vectorstore = get_vectorstore()
-retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 40})
 print("向量库文档总数:", vectorstore._collection.count())
 
 # 初始化 LLM（支持 OpenAI 兼容端点）
@@ -78,7 +78,7 @@ llm = ChatOpenAI(
 # RAG 提示模板
 system_prompt = """你是一个专业的面试官助手。根据以下提供的面试心得内容回答问题。
 严格基于上下文回答，如果上下文没有相关信息，请说"上下文不足，无法准确回答"。
-回答简洁、专业，用中文，3-5 句话即可。
+回答简洁、专业，用中文，5-10 句话即可。
 
 上下文信息：
 {context}"""
@@ -248,7 +248,8 @@ def rerank_step(x):
 rag_chain = (
     RunnableParallel(
         question=RunnablePassthrough(),
-        docs=retriever | RunnableLambda(debug_context)
+        docs=RunnableLambda(lambda q: hybrid_retrieval(q, k=10))
+        # docs=retriever | RunnableLambda(debug_context)
     )
     | RunnableLambda(rerank_step)
     | RunnableLambda(lambda x: {
