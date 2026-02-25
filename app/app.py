@@ -324,6 +324,27 @@ async def api_update_document(filename: str = Body(...), content: str = Body(...
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
+@app.delete("/api/articles/{article_id}")
+def delete_article_api(article_id: int, db: Session = Depends(get_db), admin=Depends(get_current_admin)):
+    """管理员专用：删除文章并清理 RAG 向量库"""
+    # 1. 从数据库查找
+    db_article = db.query(DBArticle).filter(DBArticle.id == article_id).first()
+    if not db_article:
+        raise HTTPException(status_code=404, detail="文章不存在")
+
+    # 2. 调用 crud.py 同步删除向量库和 MD 文件
+    try:
+        # 假设你的文件名遵循 article_ID.md 格式
+        delete_document(f"article_{article_id}.md")
+    except Exception as e:
+        print(f"向量库同步清理失败: {e}")
+
+    # 3. 从数据库删除
+    db.delete(db_article)
+    db.commit()
+    return {"status": "success", "message": "文章已彻底移除"}
+
 @app.post("/api/delete_document")
 async def api_delete_document(filename: str = Body(...)):
     """删除文档"""
