@@ -1,7 +1,7 @@
 
 # ✨ CHM的知识宇宙 - 个人技术博客系统
 
-这是一个基于 **Vue3** + **FastAPI** 搭建的全栈个人技术博客系统，集成了基于 **RAG（检索增强生成）** 技术的 AI 面试助手。项目不仅用于记录博主在 C++ 及 AI 算法领域的学习心得，更是一个智能化的知识库管理平台。
+这是一个基于 **Vue3** + **FastAPI** 搭建的全栈个人技术博客系统，集成了基于 **Agentic RAG** 技术的 AI 面试助手。项目不仅用于记录博主在 C++ 及 AI 算法领域的学习心得，更是一个智能化的知识库管理平台。
 
 ## 🚀 核心功能
 
@@ -13,6 +13,9 @@
 * **后端**：使用 FastAPI 提供高性能 API 服务，结合 SQLAlchemy 管理 SQLite 数据库。
 * **AI 引擎**：利用 LangChain 框架构建 RAG 工作流，包含文档分块、向量化检索、Rerank 重排序及 LLM 整合。
 
+## Agentic RAG 实现框架
+
+<img src="./figure/AgenticRAG.png" alt="Agentic RAG 架构图" width="600">
 
 
 ## 🛠️ 技术栈
