@@ -10,7 +10,7 @@
 * **权限校验系统**：采用 **JWT (JSON Web Token)** 实现后台管理页面的登录保护，确保只有管理员可以发布和修改文章。
 * **全栈工程化**：
 * **前端**：使用 Vue3 (Composition API) + Element Plus 构建，具备响应式布局与平滑的页面过渡动画。
-* **后端**：使用 FastAPI 提供高性能 API 服务，结合 SQLAlchemy 管理 SQLite 数据库。
+* **后端**：使用 Nginx + FastAPI 提供高性能 API 服务，结合 SQLAlchemy 管理 SQLite 数据库。
 * **AI 引擎**：利用 LangChain 框架构建 RAG 工作流，包含文档分块、向量化检索、Rerank 重排序及 LLM 整合。
 
 ## Agentic RAG 实现框架
@@ -32,7 +32,7 @@
 * **核心框架**：FastAPI
 * **数据库**：SQLite (SQLAlchemy ORM)
 * **AI/RAG**：LangChain, OpenAI/DeepSeek API, ChromaDB
-* **安全认证**：PyJWT, OAuth2
+* **安全认证**：PyJWT, OAuth2, Https
 
 ## 📂 项目结构亮点
 
@@ -42,7 +42,7 @@
 
 ## 🌐 部署与访问
 
-* **后端地址**：[个人博客](http://150.158.123.242:8080)
+* **后端地址**：[个人博客](https://chen5.asia/)
 * **个人链接**：[Github: CHM00](https://github.com/CHM00) | [CSDN 博客](https://blog.csdn.net/weixin_49891405?type=blog)
 
 ---
