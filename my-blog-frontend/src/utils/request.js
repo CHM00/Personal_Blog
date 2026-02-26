@@ -36,7 +36,7 @@
 import axios from 'axios'
 
 const service = axios.create({
-  baseURL: 'http://150.158.123.242:8000', // 确保这是你的后端地址
+  baseURL: 'https://chen5.asia', // 确保这是你的后端地址 http://150.158.123.242:8000
   timeout: 5000
 })
 
