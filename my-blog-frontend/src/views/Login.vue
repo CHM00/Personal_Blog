@@ -40,8 +40,8 @@ const handleLogin = async () => {
     params.append('username', form.value.username)
     params.append('password', form.value.password)
 
-    const res = await axios.post('http://150.158.123.242:8000/api/login', params)
-
+    // const res = await axios.post('http://150.158.123.242:8000/api/login', params)
+    const res = await axios.post('https://chen5.asia/api/login', params)
     // 登录成功，将 Token 存入浏览器的 localStorage
     localStorage.setItem('admin_token', res.data.access_token)
     ElMessage.success('登录成功！')

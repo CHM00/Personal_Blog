@@ -698,7 +698,7 @@ onMounted(async () => {
   const articleId = route.params.id
   loading.value = true
   try {
-    const res = await request.get(`/api/articles/${articleId}`)
+    const res = await request.get(`/articles/${articleId}`)
     if (res.data) {
       article.value = res.data
     }

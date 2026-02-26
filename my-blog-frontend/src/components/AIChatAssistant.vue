@@ -76,9 +76,9 @@ const sendMessage = async () => {
   scrollToBottom()
 
   isSending.value = true
-
+  // http://150.158.123.242:8000
   try {
-    const response = await fetch('http://150.158.123.242:8000/api/ask', {
+    const response = await fetch('https://chen5.asia/api/ask', {
       // 或 http://localhost:8000/api/ask   如果你在本地访问
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -32,7 +32,7 @@ ALGORITHM = "HS256"
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "123456")  # 你可以自己改成复杂的密码
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
 # SQLite 数据库配置
@@ -47,11 +47,24 @@ app = FastAPI(title="面试心得 RAG API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://150.158.123.242", "http://localhost:8080", "*"],  # 允许的前端来源，* 为允许所有（开发用）
+    allow_origins=[
+        "https://chen5.asia",
+        "https://www.chen5.asia",
+        "http://localhost:8080"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://150.158.123.242", "http://localhost:8080", "*"],  # 允许的前端来源，* 为允许所有（开发用）
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # 配置路径
 DB_PATH = "./chroma_db"
@@ -152,7 +165,7 @@ class ArticleResponse(BaseModel):
     summary: str
     content: str
 
-@app.post("/api/login")
+@app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # 校验账号密码
     if form_data.username != ADMIN_USERNAME or form_data.password != ADMIN_PASSWORD:
@@ -179,7 +192,7 @@ def get_current_admin(token: str = Depends(oauth2_scheme)):
 
 
 # 博客文章 API 接口
-@app.post("/api/articles", response_model=ArticleResponse)
+@app.post("/articles", response_model=ArticleResponse)
 def create_article(article: ArticleCreate, db: Session = Depends(get_db), current_user: str = Depends(get_current_admin)):
     """前端发布新文章接口"""
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -211,7 +224,7 @@ def create_article(article: ArticleCreate, db: Session = Depends(get_db), curren
     }
 
 
-@app.get("/api/articles", response_model=List[ArticleResponse])
+@app.get("/articles", response_model=List[ArticleResponse])
 def get_articles(db: Session = Depends(get_db)):
     """获取文章列表"""
     articles = db.query(DBArticle).order_by(DBArticle.id.desc()).all()
@@ -219,7 +232,7 @@ def get_articles(db: Session = Depends(get_db)):
              "summary": a.summary, "content": a.content} for a in articles]
 
 
-@app.get("/api/articles/{article_id}", response_model=ArticleResponse)
+@app.get("/articles/{article_id}", response_model=ArticleResponse)
 def get_article(article_id: int, db: Session = Depends(get_db)):
     """获取单篇文章"""
     a = db.query(DBArticle).filter(DBArticle.id == article_id).first()
@@ -320,7 +333,7 @@ def rewrite_query(question: str, failed_context: str) -> str:
     return new_query
 
 
-@app.post("/api/ask")
+@app.post("/ask")
 async def ask_question(question: str = Body(..., embed=True)):
     # 1. 路由判断
     decision = route_question(question).strip().upper()
@@ -452,7 +465,7 @@ async def ask_question(question: str = Body(..., embed=True)):
 #             "status": "error"
 #         }
 
-@app.get("/api/health")
+@app.get("/health")
 async def health_check():
     doc_count = get_document_count(DOCS_PATH)
     collection_count = vectorstore._collection.count()
@@ -465,7 +478,7 @@ async def health_check():
         "embedding_model": os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     }
 
-@app.post("/api/reload")
+@app.post("/reload")
 async def reload_db():
     """重新加载文档（开发用）"""
     global vectorstore, retriever
@@ -475,7 +488,7 @@ async def reload_db():
     return {"status": "reloaded", "message": "向量库已重新构建"}
 
 # 新增 CRUD API 端点
-@app.post("/api/add_document")
+@app.post("/add_document")
 async def api_add_document(filename: str = Body(...), content: str = Body(...)):
     """添加新文档"""
     try:
@@ -484,7 +497,7 @@ async def api_add_document(filename: str = Body(...), content: str = Body(...)):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-@app.post("/api/update_document")
+@app.post("/update_document")
 async def api_update_document(filename: str = Body(...), content: str = Body(...)):
     """更新文档"""
     try:
@@ -494,7 +507,7 @@ async def api_update_document(filename: str = Body(...), content: str = Body(...
         return {"status": "error", "message": str(e)}
 
 
-@app.delete("/api/articles/{article_id}")
+@app.delete("/articles/{article_id}")
 def delete_article_api(article_id: int, db: Session = Depends(get_db), admin=Depends(get_current_admin)):
     """管理员专用：删除文章并清理 RAG 向量库"""
     # 1. 从数据库查找
@@ -514,7 +527,7 @@ def delete_article_api(article_id: int, db: Session = Depends(get_db), admin=Dep
     db.commit()
     return {"status": "success", "message": "文章已彻底移除"}
 
-@app.post("/api/delete_document")
+@app.post("/delete_document")
 async def api_delete_document(filename: str = Body(...)):
     """删除文档"""
     try:

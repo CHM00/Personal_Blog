@@ -71,7 +71,7 @@ const submitArticle = async () => {
 
     const token = localStorage.getItem('admin_token')
     // 使用 request 代替 axios
-    await request.post('/api/articles', payload, {
+    await request.post('/articles', payload, {
       headers: {
         Authorization: `Bearer ${token}`
       }

@@ -582,7 +582,7 @@ const isAdmin = computed(() => {
 const fetchArticles = async () => {
   loading.value = true
   try {
-    const res = await request.get('/api/articles')
+    const res = await request.get('/articles')
     articles.value = res.data
   } catch (error) {
     console.error('获取文章失败:', error)
@@ -598,7 +598,7 @@ const handleDelete = (id) => {
     type: 'warning'
   }).then(async () => {
     try {
-      await request.delete(`/api/articles/${id}`)
+      await request.delete(`/articles/${id}`)
       ElMessage.success('删除成功')
       fetchArticles()
     } catch (error) {
