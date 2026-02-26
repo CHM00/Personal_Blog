@@ -137,8 +137,6 @@ def get_db():
     finally:
         db.close()
 
-
-# ================= 2. Pydantic 数据模型 =================
 class ArticleCreate(BaseModel):
     title: str
     tags: List[str]
@@ -154,8 +152,6 @@ class ArticleResponse(BaseModel):
     summary: str
     content: str
 
-
-# 登录获取 Token 接口
 @app.post("/api/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # 校验账号密码
@@ -266,23 +262,195 @@ rag_chain = (
 )
 
 # 完整 RAG 链
-rag_chain = rag_chain  # Simplified since retriever is now in stuff_chain
+rag_chain = rag_chain
+
+
+def route_question(question: str):
+    decision_prompt = f"判断该问题是否需要查询面试心得库：'{question}'。如果是面试相关的问题优先回复'RAG', 如果是闲聊则回答'DIRECT', 最后的结果只需回答 'RAG' 或 'DIRECT'"
+    # 调用 LLM 进行判断
+    decision = llm.invoke(decision_prompt).content
+    return decision
+
+def search_interview_notes(query: str):
+    # 调用你原有的混合检索和重排序逻辑
+    docs = hybrid_retrieval(query)
+    print("混合检索出的文档:", docs)
+    reranked = rerank_documents(query, docs)
+    print("重排序后的文档:", reranked)
+    return format_context(reranked), len(reranked)
+
+
+def Analysis_question(question: str, context: str) -> str:
+    # 增加对空上下文的预判，节省 LLM 调用
+    if not context or len(context) < 20:
+        return "NO"
+
+    decision_prompt = f"请分析以下上下文是否包含回答问题 '{question}' 所需的核心信息。只需要回答 'YES' 或 'NO'。\n\n上下文：{context}"
+    decision = llm.invoke(decision_prompt).content.strip().upper()
+    return "YES" if "YES" in decision else "NO"
+
+
+def response(context: str, question: str) -> str:
+    # 使用 f-string 替代错误的 .replace() 逻辑
+    prompt_text = f"""你是一个专业的面试官助手。根据以下提供的面试心得内容回答问题。
+    严格基于上下文回答，如果上下文没有相关信息，请说"上下文不足，无法准确回答"。
+    回答简洁、专业，用中文，5-10 句话即可。
+
+    上下文信息：
+    {context}
+
+    用户问题：
+    {question}"""
+
+    # 确保获取 content 文本
+    return llm.invoke(prompt_text).content
+
+def rewrite_query(question: str, failed_context: str) -> str:
+    """根据失败的检索结果，生成更精准的搜索关键词"""
+    rewrite_prompt = f"""
+    原始问题：{question}
+    已尝试检索的内容摘要：{failed_context[:200]}...
+
+    检索评估结果显示以上内容不足以回答问题。请你重新审视原始问题，
+    提取或转换出 1-3 个更适合在面试心得库中进行检索的关键词或短句（例如：寻找同义词、拆分复杂问题）。
+    只需输出转换后的关键词，用空格分隔。
+    """
+    new_query = llm.invoke(rewrite_prompt).content.strip()
+    print(f"DEBUG: 查询重写 [{question}] -> [{new_query}]")
+    return new_query
+
 
 @app.post("/api/ask")
 async def ask_question(question: str = Body(..., embed=True)):
-    """提问接口"""
+    # 1. 路由判断
+    decision = route_question(question).strip().upper()
+    print("路由决策:", decision)
+
     try:
-        answer = rag_chain.invoke(question)
-        return {
-            "answer": answer,
-            "status": "success",
-            "sources": len(retriever.invoke(question))  # 检索文档数
-        }
+        if "RAG" in decision:
+            n = 3
+            current_search_query = question  # 初始搜索词
+            best_context = ""
+            source_count = 0
+
+            while n > 0:
+                print(f"--- 尝试检索 (剩余次数: {n}) ---")
+                # 检索并获取重排后的文档
+                context, length = search_interview_notes(current_search_query)
+                source_count = length
+
+                # 评估上下文
+                if Analysis_question(question, context) == "YES":
+                    print("评估通过：找到匹配信息")
+                    best_context = context
+                    break
+                else:
+                    print("评估失败：信息不足，尝试重写查询词...")
+                    best_context = context  # 记录最后的上下文作为保底
+                    current_search_query = rewrite_query(question, context)
+                    n -= 1
+            answer = response(best_context, question)
+            return {
+                "answer": answer,
+                "status": "success",
+                "sources": source_count,
+                "refined": (n < 3)  # 告诉前端是否触发了重写逻辑
+            }
+
+        else:
+            # 闲聊模式直接回答
+            answer = llm.invoke("用3-5句话回答用户问题:"+ question).content
+            return {"answer": answer, "status": "success", "sources": 0}
+
     except Exception as e:
-        return {
-            "answer": f"错误：{str(e)}",
-            "status": "error"
-        }
+        return {"answer": f"Agent 运行异常: {str(e)}", "status": "error"}
+
+
+
+# @app.post("/api/ask")
+# async def ask_question(question: str = Body(..., embed=True)):
+#     """提问接口"""
+#     decision = route_question(question)
+#     print("路由的结果是什么？", decision)
+#
+#     if "RAG" not in decision:
+#         return {"answer": llm.invoke(question).content, "status": "success", "sources": 0}
+#
+#     try:
+#         # Agentic RAG 核心逻辑
+#         current_query = question
+#         n = 3
+#         final_context = ""
+#
+#         while n > 0:
+#             # 1. 检索
+#             context, length = search_interview_notes(current_query)
+#
+#             # 2. 评估
+#             ans = Analysis_question(question, context)  # 评估 context 是否能回答原始问题
+#
+#             if 'Yes' in ans:
+#                 final_context = context
+#                 break
+#             else:
+#                 # 3. 关键：如果搜不到，让 LLM 重写查询词（Query Transformation）
+#                 print(f"当前搜索不到答案，尝试重写查询词... 剩余次数: {n - 1}")
+#                 current_query = rewrite_query(question, context)
+#                 n -= 1
+#                 final_context = context  # 保留最后一次的 context 作为保底
+#
+#         # 4. 生成回答
+#         answer = response(final_context, question)
+#         return {
+#             "answer": answer,
+#             "status": "success",
+#             "sources": length
+#         }
+#
+#
+#         # if "RAG" in decision:
+#         #     n=3
+#         #     context = ""
+#         #     length = 0
+#         #     while(n):
+#         #         context, length = search_interview_notes(question)
+#         #         print("分析上下文是否能够回答用户问题，剩余尝试次数:", n)
+#         #         print("当前上下文:", context[:500], "...")
+#         #         # 分析上下文是否能够回答用户问题
+#         #         ans = Analysis_question(question, context)
+#         #         print("分析结果:", ans)
+#         #         if 'Yes' in ans:
+#         #             break
+#         #         else:
+#         #             n-=1
+#         #     answer = response(context, question)
+#         #     # answer = rag_chain.invoke(question)
+#         #     return {
+#         #         "answer": answer,
+#         #         "status": "success",
+#         #         "sources": length  # 检索文档数
+#         #     }
+#         # else:
+#         #     answer = llm.invoke(question).content
+#         #     print("未检索知识库直接回答:", answer)
+#         #     return {
+#         #         "answer": answer,
+#         #         "status": "success",
+#         #         "sources": 0  # 检索文档数
+#         #     }
+#             # return llm.invoke(question).content  # 直接回答
+#             #
+#             # answer = rag_chain.invoke(question)
+#             # return {
+#             #     "answer": answer,
+#             #     "status": "success",
+#             #     "sources": len(retriever.invoke(question))  # 检索文档数
+#             # }
+#     except Exception as e:
+#         return {
+#             "answer": f"错误：{str(e)}",
+#             "status": "error"
+#         }
 
 @app.get("/api/health")
 async def health_check():

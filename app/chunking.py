@@ -33,7 +33,7 @@ def split_documents(documents: List[Document]) -> List[Document]:
     # 配置markdown切分器
     markdown_splitter = MarkdownHeaderTextSplitter(
         headers_to_split_on=headers_to_split_on,
-        strip_headers=False  # 保留标题在正文中，增强检索时的文本匹配度
+        strip_headers=False
     )
 
     final_chunks = []

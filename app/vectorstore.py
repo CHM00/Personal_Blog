@@ -126,10 +126,10 @@ def hybrid_retrieval(query: str, k: int = 10):
     """
     vs = get_vectorstore()
 
-    # 1. 语义检索 (Vector Search)
+    # 语义检索
     vector_docs = vs.similarity_search(query, k=k)
 
-    # 2. 关键词检索 (BM25)
+    # 关键词检索
     # 获取库中所有文档作为语料库
     all_content = vs._collection.get()
     documents_content = all_content['documents']
@@ -154,8 +154,9 @@ def hybrid_retrieval(query: str, k: int = 10):
         for i in top_n_indices if bm25_scores[i] > 0
     ]
 
-    # 3. 合并去重
+    # 合并去重
     combined_dict = {doc.page_content: doc for doc in (vector_docs + bm25_docs)}
+    print(f"向量检索返回 {len(vector_docs)} 个文档，BM25 检索返回 {len(bm25_docs)} 个文档，合并后 {len(combined_dict)} 个文档")
     return list(combined_dict.values())
 
 if __name__ == "__main__":

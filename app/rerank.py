@@ -13,7 +13,7 @@ def rerank_documents(query: str, docs: List, top_k: int = 4) -> List:
     if not docs:
         return []
 
-    # 准备 payload 中的 documents（取 page_content）
+    # 准备 payload 中的 documents
     documents = [doc.page_content for doc in docs]
 
     payload = {
@@ -37,7 +37,7 @@ def rerank_documents(query: str, docs: List, top_k: int = 4) -> List:
         response.raise_for_status()
         result = response.json()
 
-        # SiliconFlow rerank 返回的 results 是按分数降序排列的列表
+        # rerank 返回的 results 是按分数降序排列的列表
         # 每个元素有 index（原始顺序）和 relevance_score
         ranked_results = result.get("results", [])
 
@@ -50,7 +50,6 @@ def rerank_documents(query: str, docs: List, top_k: int = 4) -> List:
                 sorted_docs.append(docs[idx])
                 seen_indices.add(idx)
 
-        # 如果结果不够 top_k，补上剩下的（理论上不会）
         if len(sorted_docs) < top_k:
             for i, doc in enumerate(docs):
                 if i not in seen_indices:
@@ -62,5 +61,4 @@ def rerank_documents(query: str, docs: List, top_k: int = 4) -> List:
 
     except Exception as e:
         print(f"Rerank 失败: {e}")
-        # 失败时返回原始顺序（降级策略）
         return docs[:top_k]
