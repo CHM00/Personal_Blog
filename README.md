@@ -3,19 +3,21 @@
 
 这是一个基于 **Vue3** + **FastAPI** 搭建的全栈个人技术博客系统，集成了基于 **Agentic RAG** 技术的 AI 面试助手。项目不仅用于记录博主在 C++ 及 AI 算法领域的学习心得，更是一个智能化的知识库管理平台。
 
+## Agentic RAG 实现框架
+
+<img src="./figure/AgenticRAG.png" alt="Agentic RAG 架构图" width="600">
+
+
 ## 🚀 核心功能
 
 * **动态博客管理**：支持 Markdown 文章的后台发布与展示。在后台发布文章时，系统会自动同步生成本地 `.md` 文件，实现知识库的实时更新。
-* **AI 面试助手 (RAG)**：集成基于大模型的全局悬浮聊天组件。助手通过向量数据库（ChromaDB）检索本地面试心得文档，提供专业且具有针对性的问答服务。
+* **AI 面试助手 (RAG)**：集成基于大模型的全局悬浮聊天组件。助手通过向量数据库（ChromaDB）和jieba分词实现BM25混合检索本地面试心得文档，提供专业且具有针对性的问答服务。
 * **权限校验系统**：采用 **JWT (JSON Web Token)** 实现后台管理页面的登录保护，确保只有管理员可以发布和修改文章。
 * **全栈工程化**：
 * **前端**：使用 Vue3 (Composition API) + Element Plus 构建，具备响应式布局与平滑的页面过渡动画。
 * **后端**：使用 FastAPI 提供高性能 API 服务，结合 SQLAlchemy 管理 SQLite 数据库。
 * **AI 引擎**：利用 LangChain 框架构建 RAG 工作流，包含文档分块、向量化检索、Rerank 重排序及 LLM 整合。
 
-## Agentic RAG 实现框架
-
-<img src="./figure/AgenticRAG.png" alt="Agentic RAG 架构图" width="600">
 
 
 ## 🛠️ 技术栈
