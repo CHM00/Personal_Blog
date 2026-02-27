@@ -42,7 +42,7 @@
 
 ## 🌐 部署与访问
 
-* **后端地址**：[个人博客](https://chen5.asia/)
+* **后端地址**：[个人博客https已暂停](https://chen5.asia/) [个人博客http可访问](http://150.158.123.242:8080/)
 * **个人链接**：[Github: CHM00](https://github.com/CHM00) | [CSDN 博客](https://blog.csdn.net/weixin_49891405?type=blog)
 
 ---
